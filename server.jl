@@ -1,10 +1,12 @@
 using HttpServer
 using WebSockets
 
+timestwo(a) = 2a
+
 wsh = WebSocketHandler() do req,client
   while true
     msg = read(client)
-    println(msg)
+
     write(client, msg)
   end
 end
