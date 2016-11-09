@@ -1,0 +1,3 @@
+using Redis
+
+conn = RedisConnection()
