@@ -6,15 +6,17 @@ conn = RedisConnection()
 
 function start(o)
   println("starting")
-  produce(o[2])
-  println("produced")
+  envelope = JSON.parse(o[2])
+  produce(envelope)
 end
 
 function sink(p::Task)
   for s in p
     println(s)
-    s = JSON.parse(s)
-    println(typeof(s))
+    i = 0
+    while i < 10^8
+      i += 1
+    end
     println(s["returnKey"])
     publish(conn, s["returnKey"], JSON.json(s))
     println("published")

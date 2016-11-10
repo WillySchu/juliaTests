@@ -33,8 +33,8 @@ class InsightClient {
     envelope.stampCreated = moment().toString();
     callbackMap[envelope.returnKey] = callback;
     redis.rpush(this.queue, JSON.stringify(envelope), (e, o) => {
-      console.log('pushed');
       redis.subscribe(envelope.returnKey);
+      console.log('pushed');
     })
   }
 }
