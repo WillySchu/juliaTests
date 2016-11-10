@@ -13,8 +13,10 @@ end
 function sink(p::Task)
   for s in p
     println(s)
-    println(s.returnKey)
-    publish(conn, s.returnKey, s)
+    s = JSON.parse(s)
+    println(typeof(s))
+    println(s["returnKey"])
+    publish(conn, s["returnKey"], JSON.json(s))
     println("published")
   end
 end
