@@ -1,5 +1,6 @@
 const Redis = require('redis');
 const moment = require('moment');
+const fs = require('fs');
 
 const Envelope = require('./insightPayload');
 
@@ -13,6 +14,8 @@ redis.on('message', (channel, o) => {
   if (callbackMap[channel] === undefined) {
     console.log('Ignoring message on channel: ', channel);
   } else {
+    console.log(o.slice(0,100));
+    console.log(o.slice(o.length-101));
     callbackMap[channel](JSON.parse(o))
     delete callbackMap[channel];
   }
@@ -32,6 +35,8 @@ class InsightClient {
     envelope.payload = payload;
     envelope.stampCreated = moment().toString();
     callbackMap[envelope.returnKey] = callback;
+    console.log(JSON.stringify(envelope).length);
+    fs.writeFile('envelope.json', JSON.stringify(envelope));
     redis.rpush(this.queue, JSON.stringify(envelope), (e, o) => {
       redis.subscribe(envelope.returnKey);
       console.log('pushed');
