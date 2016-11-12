@@ -1,4 +1,5 @@
-include("workerPurse.jl")
+include("insights.jl")
+using .Insights
 using Redis
 using JSON
 
@@ -9,17 +10,22 @@ function start(o)
   println("starting")
   envelope = JSON.parse(o[2])
 
+  println(typeof(envelope["payload"]))
+
+  try
+    Insights.harvestInsights(envelope["payload"])
+  catch e
+    produce(e)
+  end
+
   produce(envelope)
 end
 
 function sink(p::Task)
   for s in p
     println(s["returnKey"])
-    r = JSON.json(s)
-    println(length(string(r)))
-    println(r[1:100])
-    println(string(r)[end-100:end])
-    publish(pubsub, s["returnKey"], r)
+
+    publish(pubsub, s["returnKey"], "[]")
     println("published")
   end
 end

@@ -1,4 +1,4 @@
-type WorkerPurse
+type Insight
   queue
   semaphoreKey
   semaphoreTTL
