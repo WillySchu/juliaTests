@@ -15,16 +15,15 @@ function start(o)
   try
     Insights.harvestInsights(envelope["payload"])
   catch e
-    produce(e)
+    println(e)
+    envelope["error"] = e
+    produce(envelope)
   end
-
-  produce(envelope)
+  # produce(envelope)
 end
 
 function sink(p::Task)
   for s in p
-    println(s["returnKey"])
-
     publish(pubsub, s["returnKey"], "[]")
     println("published")
   end
