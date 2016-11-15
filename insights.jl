@@ -8,15 +8,57 @@ function harvestInsights(arr::Array{Any,1})
   end
 
   push!(results, dayByDay(arr))
+  if length(arr) < 14
+    return results
+  end
+  push!(results, weekByWeek(arr))
+  if length(arr) < 60
+    return results
+  end
+
+  return results
 end
 
 function dayByDay(arr::Array{Any, 1})
-  println("Comparing by day")
+  println("Comparing by day...")
   today = aggregate(arr[end:end])
   yesterday = aggregate(arr[end-1:end-1])
   diff = compare(today, yesterday)
+  insights = generateInsights(diff, 5)
+  return insights
+end
 
-  return Dict()
+function weekByWeek(arr::Array{Any, 1})
+  println("Comparing by week...")
+  thisWeek = aggregate(arr[end-6:end])
+  lastWeek = aggregate(arr[end-13:end-7])
+  diff = compare(thisWeek, lastWeek)
+  insights = generateInsights(diff, 5)
+  return insights
+end
+
+function generateInsights(diff::Dict{String, Any}, n::Int64)
+  println("Generating...")
+  insights = []
+  meta = diff["meta"]
+  for met in keys(diff)
+    if met == "meta"
+      continue
+    end
+    for dim in keys(diff[met])
+      insight = Dict{String, Any}()
+      insight["startDate"] = meta["startDate"]
+      insight["endDate"] = meta["endDate"]
+      insight["metrics"] = met
+      insight["dimensions"] = dim
+      insight["type"] = "type"
+      insight["percentChange"] = diff[met][dim]["score"]
+      insight["significance"] = diff[met][dim]["significance"]
+      push!(insights, insight)
+    end
+  end
+  sort!(insights, by=x->x["significance"])
+  return insights[1:n]
 end
 
 function compare(first::Dict{String, Any}, second::Dict{String, Any})
@@ -30,33 +72,45 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
     end
 
     if !haskey(diff, met)
-      diff[met] = Dict{String, Float64}()
+      diff[met] = Dict{String, Any}()
     end
     println(met)
     for dim in keys(first[met])
+      diff[met][dim] = Dict{String, Float64}()
       if haskey(second[met], dim)
         push!(inn, dim)
         if first[met][dim] == 0
           if second[met][dim] == 0
-            diff[met][dim] = 0
+            diff[met][dim]["score"] = 0
           else
-            diff[met][dim] = -1
+            diff[met][dim]["score"] = -1
           end
         else
-          diff[met][dim] = (first[met][dim] - second[met][dim]) / second[met][dim]
+          diff[met][dim]["score"] = (first[met][dim] - second[met][dim]) / second[met][dim]
+        end
+        if diff[met][dim]["score"] == Inf
+          diff[met][dim]["significance"] = (first[met][dim] + second[met][dim])^2 * 100
+        else
+          diff[met][dim]["significance"] = (first[met][dim] + second[met][dim])^2 * diff[met][dim]["score"]
         end
       else
+        diff[met][dim]["score"] = Inf
+        diff[met][dim]["significance"] = first[met][dim]^2 * 100
         push!(out, dim)
       end
     end
   end
-  for met in keys(diff)
-    for key in keys(diff[met])
-      println(key)
-      println(diff[met][key])
-      println(">>>>>>>>>>>>>>>>>>>>>>")
-    end
-  end
+  # for met in keys(diff)
+  #   for key in keys(diff[met])
+  #     println(key)
+  #     println(diff[met][key])
+  #     println(">>>>>>>>>>>>>>>>>>>>>>")
+  #   end
+  # end
+  meta = Dict{String, Any}()
+  meta["startDate"] = second["meta"]["startDate"]
+  meta["endDate"] = first["meta"]["endDate"]
+  diff["meta"] = meta
   return diff
 end
 

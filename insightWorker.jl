@@ -13,9 +13,12 @@ function start(o)
   println(typeof(envelope["payload"]))
 
   try
-    Insights.harvestInsights(envelope["payload"])
+    insights = Insights.harvestInsights(envelope["payload"])
+    envelope["payload"] = insights
+    produce(envelope)
   catch e
     println(e)
+    envelope["payload"] = []
     envelope["error"] = e
     produce(envelope)
   end
@@ -24,7 +27,9 @@ end
 
 function sink(p::Task)
   for s in p
-    publish(pubsub, s["returnKey"], "[]")
+    println("Finished")
+    println(s["returnKey"])
+    publish(pubsub, s["returnKey"], JSON.json(s))
     println("published")
   end
 end
