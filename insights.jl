@@ -11,10 +11,18 @@ function harvestInsights(arr::Array{Any,1})
   if length(arr) < 14
     return results
   end
+
   push!(results, weekByWeek(arr))
   if length(arr) < 60
     return results
   end
+
+  push!(results, weekByWeek(arr))
+  if length(arr) < 730
+    return results
+  end
+
+  push!(results, yearByYear(arr))
 
   return results
 end
@@ -37,6 +45,24 @@ function weekByWeek(arr::Array{Any, 1})
   return insights
 end
 
+function monthByMonth(arr::Array{Any, 1})
+  println("Comparing by month")
+  thisMonth = aggregate(arr[end-29:end])
+  lastMonth = aggregate(arr[end-59:end-30])
+  diff = compare(thisMonth, lastMonth)
+  insights = generateInsights(diff, 5)
+  return insights
+end
+
+function yearByYear(arr::Array{Any, 1})
+  println("comparing by year...")
+  thisYear = aggregate(arr[end-264:end])
+  lastYear = aggregate(arr[end-719:end-365])
+  diff = compare(thisYear, lastYear)
+  insights = generateInsights(diff, 5)
+  return insights
+end
+
 function generateInsights(diff::Dict{String, Any}, n::Int64)
   println("Generating...")
   insights = []
@@ -53,11 +79,17 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
       insight["dimensions"] = dim
       insight["type"] = "type"
       insight["percentChange"] = diff[met][dim]["score"]
-      insight["significance"] = diff[met][dim]["significance"]
-      push!(insights, insight)
+      mag = diff[met][dim]["magnitude"]
+      insight["magnitude"] = mag
+      norm = mag / diff["meta"]["largest"][met] + 1
+      insight["significance"] = norm + abs(insight["percentChange"])
+      # TODO: handle infinity better
+      if insight["percentChange"] != Inf
+        push!(insights, insight)
+      end
     end
   end
-  sort!(insights, by=x->x["significance"])
+  sort!(insights, by=x->x["significance"], rev=true)
   return insights[1:n]
 end
 
@@ -66,10 +98,12 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
   inn = []
   out = []
   diff = Dict{String, Any}()
+  largest = Dict{String, Float64}()
   for met in keys(first)
     if met == "meta"
       continue
     end
+    largest[met] = 0
 
     if !haskey(diff, met)
       diff[met] = Dict{String, Any}()
@@ -78,6 +112,9 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
     for dim in keys(first[met])
       diff[met][dim] = Dict{String, Float64}()
       if haskey(second[met], dim)
+        if largest[met] < second[met][dim] + first[met][dim]
+          largest[met] = second[met][dim] + first[met][dim]
+        end
         push!(inn, dim)
         if first[met][dim] == 0
           if second[met][dim] == 0
@@ -88,28 +125,21 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
         else
           diff[met][dim]["score"] = (first[met][dim] - second[met][dim]) / second[met][dim]
         end
-        if diff[met][dim]["score"] == Inf
-          diff[met][dim]["significance"] = (first[met][dim] + second[met][dim])^2 * 100
-        else
-          diff[met][dim]["significance"] = (first[met][dim] + second[met][dim])^2 * diff[met][dim]["score"]
-        end
+        diff[met][dim]["magnitude"] = first[met][dim] + second[met][dim]
       else
+        if largest[met] < first[met][dim]
+          largest[met] = first[met][dim]
+        end
         diff[met][dim]["score"] = Inf
-        diff[met][dim]["significance"] = first[met][dim]^2 * 100
+        diff[met][dim]["magnitude"] = first[met][dim]
         push!(out, dim)
       end
     end
   end
-  # for met in keys(diff)
-  #   for key in keys(diff[met])
-  #     println(key)
-  #     println(diff[met][key])
-  #     println(">>>>>>>>>>>>>>>>>>>>>>")
-  #   end
-  # end
   meta = Dict{String, Any}()
   meta["startDate"] = second["meta"]["startDate"]
   meta["endDate"] = first["meta"]["endDate"]
+  meta["largest"] = largest
   diff["meta"] = meta
   return diff
 end
