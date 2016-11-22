@@ -1,3 +1,4 @@
+module insightWorker
 include("insights.jl")
 using .Insights
 using Redis
@@ -50,4 +51,4 @@ function listen()
   end
 end
 
-listen()
+end
