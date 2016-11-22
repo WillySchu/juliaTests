@@ -11,8 +11,6 @@ function start(o)
   println("starting")
   envelope = JSON.parse(o[2])
 
-  println(typeof(envelope["payload"]))
-
   try
     insights = Insights.harvestInsights(envelope["payload"])
     envelope["payload"] = insights

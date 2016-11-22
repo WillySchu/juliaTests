@@ -3,28 +3,61 @@ module Insights
 function harvestInsights(arr::Array{Any,1})
   println("Harvesting...")
   results = []
-  if length(arr) < 2
+
+  days = splitByDate(arr[1])
+  if length(days) < 2
     error("Not enough data to process")
   end
 
-  push!(results, dayByDay(arr))
-  if length(arr) < 14
+  push!(results, dayByDay(days))
+  if length(days) < 14
+    return results
+  end
+  push!(results, weekByWeek(days))
+  if length(days) < 60
     return results
   end
 
-  push!(results, weekByWeek(arr))
-  if length(arr) < 60
+  push!(results, weekByWeek(days))
+  if length(days) < 730
     return results
   end
 
-  push!(results, weekByWeek(arr))
-  if length(arr) < 730
-    return results
-  end
-
-  push!(results, yearByYear(arr))
+  # push!(results, yearByYear(days))
 
   return results
+end
+
+function splitByDate(data::Dict{String, Any})
+  dateRegex = r".+?(?=T)"
+  result = []
+  splits = Dict{String, Any}()
+
+  for row in data["rows"]
+    date = match(dateRegex, row[1]).match
+    if !haskey(splits, date)
+      splits[date] = []
+    end
+    push!(splits[date], row[2:end])
+  end
+
+  for date in keys(splits)
+    res = Dict{String, Any}()
+    res["query"] = Dict{String, Any}()
+    res["query"]["start-date"] = date
+    res["query"]["end-date"] = date
+    res["query"]["dimensions"] = data["query"]["dimensions"]
+    res["query"]["metrics"] = data["query"]["metrics"]
+    res["rows"] = splits[date]
+    res["columnHeaders"] = data["columnHeaders"][2:end]
+    push!(result, copy(res))
+  end
+  sortByDate!(result)
+  return result
+end
+
+function sortByDate!(arr::Array{Any, 1})
+  sort!(arr, by=x->x["query"]["start-date"])
 end
 
 function dayByDay(arr::Array{Any, 1})
@@ -81,6 +114,10 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
       insight["percentChange"] = diff[met][dim]["score"]
       mag = diff[met][dim]["magnitude"]
       insight["magnitude"] = mag
+      insight["mag1"] = diff[met][dim]["mag1"]
+      if haskey(diff[met][dim], "mag2")
+        insight["mag2"] = diff[met][dim]["mag2"]
+      end
       norm = mag / diff["meta"]["largest"][met] + 1
       insight["significance"] = norm + abs(insight["percentChange"])
       # TODO: handle infinity better
@@ -108,7 +145,6 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
     if !haskey(diff, met)
       diff[met] = Dict{String, Any}()
     end
-    println(met)
     for dim in keys(first[met])
       diff[met][dim] = Dict{String, Float64}()
       if haskey(second[met], dim)
@@ -126,12 +162,15 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
           diff[met][dim]["score"] = (first[met][dim] - second[met][dim]) / second[met][dim]
         end
         diff[met][dim]["magnitude"] = first[met][dim] + second[met][dim]
+        diff[met][dim]["mag1"] = first[met][dim]
+        diff[met][dim]["mag2"] = second[met][dim]
       else
         if largest[met] < first[met][dim]
           largest[met] = first[met][dim]
         end
         diff[met][dim]["score"] = Inf
         diff[met][dim]["magnitude"] = first[met][dim]
+        diff[met][dim]["mag1"] = first[met][dim]
         push!(out, dim)
       end
     end
@@ -156,8 +195,8 @@ function aggregate(arr::Array{Any, 1})
   end
   x = 0
   for day in arr
-    startDate = Date(match(dateRegex, day["query"]["start-date"]).match)
-    endDate = Date(match(dateRegex, day["query"]["end-date"]).match)
+    startDate = Date(day["query"]["start-date"])
+    endDate = Date(day["query"]["end-date"])
 
     if startDate != endDate
       error("Harvestor received non exploded data")
