@@ -5,23 +5,25 @@ function harvestInsights(arr::Array{Any,1})
   results = []
 
   days = splitByDate(arr[1])
+  checkContiguousDates(days)
   if length(days) < 2
     error("Not enough data to process")
   end
 
-  push!(results, dayByDay(days))
+  push!(results, dayByDay(days, 1))
   if length(days) < 14
     return results
   end
-  push!(results, weekByWeek(days))
+
+  push!(results, weekByWeek(days, 1))
   if length(days) < 60
     return results
   end
 
-  push!(results, weekByWeek(days))
-  if length(days) < 730
-    return results
-  end
+  # push!(results, weekByWeek(days))
+  # if length(days) < 730
+  #   return results
+  # end
 
   # push!(results, yearByYear(days))
 
@@ -56,23 +58,33 @@ function splitByDate(data::Dict{String, Any})
   return result
 end
 
+function checkContiguousDates(arr::Array{Any, 1})
+  for day in arr
+    if isdefined(:lastDate)
+      println(lastDate - day["query"]["start-date"])
+    end
+    lastDate = day["query"]["start-date"]
+  end
+end
+
 function sortByDate!(arr::Array{Any, 1})
   sort!(arr, by=x->x["query"]["start-date"])
 end
 
-function dayByDay(arr::Array{Any, 1})
+function dayByDay(arr::Array{Any, 1}, n::Int64)
   println("Comparing by day...")
   today = aggregate(arr[end:end])
-  yesterday = aggregate(arr[end-1:end-1])
+  yesterday = aggregate(arr[end-n:end-n])
   diff = compare(today, yesterday)
   insights = generateInsights(diff, 5)
   return insights
 end
 
-function weekByWeek(arr::Array{Any, 1})
+function weekByWeek(arr::Array{Any, 1}, w::Int64)
   println("Comparing by week...")
+  n = 7 * w
   thisWeek = aggregate(arr[end-6:end])
-  lastWeek = aggregate(arr[end-13:end-7])
+  lastWeek = aggregate(arr[end-6-n:end-n])
   diff = compare(thisWeek, lastWeek)
   insights = generateInsights(diff, 5)
   return insights
