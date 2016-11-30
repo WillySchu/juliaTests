@@ -59,11 +59,18 @@ function splitByDate(data::Dict{String, Any})
 end
 
 function checkContiguousDates(arr::Array{Any, 1})
+  local lastDate = ""
+  oneDay = Dates.Day(1)
   for day in arr
-    if isdefined(:lastDate)
-      println(lastDate - day["query"]["start-date"])
+    if lastDate == ""
+      lastDate = Date(day["query"]["start-date"])
+      continue
     end
-    lastDate = day["query"]["start-date"]
+    diff = Date(day["query"]["start-date"]) - lastDate
+    if diff > oneDay
+      error("data set not contiguous")
+    end
+    lastDate = Date(day["query"]["start-date"])
   end
 end
 
