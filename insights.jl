@@ -12,6 +12,8 @@ function harvestInsights(arr::Array{Any,1})
 
   push!(results, weekToDate(days))
 
+  push!(results, monthToDate(days))
+
   # push!(results, dayByDay(days, 1))
   # if length(days) < 14
   #   return results
@@ -88,6 +90,13 @@ function weekToDate(arr::Array{Any, 1})
   diff = compare(currentPeriod, lastPeriod)
   insights = generateInsights(diff, 5)
   return insights
+end
+
+function monthToDate(arr::Array{Any, 1})
+  date = Date(arr[end]["query"]["start-date"])
+  previousDate = date - Dates.Month(1)
+  println(date)
+  println(previousDate)
 end
 
 function dayByDay(arr::Array{Any, 1}, n::Int64)
