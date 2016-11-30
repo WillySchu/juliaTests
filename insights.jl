@@ -10,15 +10,17 @@ function harvestInsights(arr::Array{Any,1})
     error("Not enough data to process")
   end
 
-  push!(results, dayByDay(days, 1))
-  if length(days) < 14
-    return results
-  end
+  push!(results, weekToDate(days))
 
-  push!(results, weekByWeek(days, 1))
-  if length(days) < 60
-    return results
-  end
+  # push!(results, dayByDay(days, 1))
+  # if length(days) < 14
+  #   return results
+  # end
+  #
+  # push!(results, weekByWeek(days, 1))
+  # if length(days) < 60
+  #   return results
+  # end
 
   # push!(results, weekByWeek(days))
   # if length(days) < 730
@@ -76,6 +78,16 @@ end
 
 function sortByDate!(arr::Array{Any, 1})
   sort!(arr, by=x->x["query"]["start-date"])
+end
+
+function weekToDate(arr::Array{Any, 1})
+  startDate = Date(arr[end]["query"]["start-date"])
+  dayOfWeek = Dates.dayofweek(startDate)
+  currentPeriod = aggregate(arr[end-dayOfWeek+1:end])
+  lastPeriod = aggregate(arr[end-7-dayOfWeek+1:end-7])
+  diff = compare(currentPeriod, lastPeriod)
+  insights = generateInsights(diff, 5)
+  return insights
 end
 
 function dayByDay(arr::Array{Any, 1}, n::Int64)
