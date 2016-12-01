@@ -94,9 +94,13 @@ end
 
 function monthToDate(arr::Array{Any, 1})
   date = Date(arr[end]["query"]["start-date"])
-  previousDate = date - Dates.Month(1)
-  println(date)
-  println(previousDate)
+  dayOfMonth = Dates.dayofmonth(date)
+  daysInPrevMonth = Dates.daysinmonth(date - Dates.Month(1))
+  currentPeriod = aggregate(arr[end-dayOfMonth+1:end])
+  lastPeriod = aggregate(arr[end-dayOfMonth-daysInPrevMonth+1:end-daysInPrevMonth])
+  diff = compare(currentPeriod, lastPeriod)
+  insights = generateInsights(diff, 5)
+  return insights
 end
 
 function dayByDay(arr::Array{Any, 1}, n::Int64)
