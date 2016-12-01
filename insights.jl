@@ -103,11 +103,33 @@ function monthToDate(arr::Array{Any, 1})
   return insights
 end
 
-# Leave to finish later
 function qtrToDate(arr::Array{Any, 1})
+  quarters = [90, 91, 92, 92]
   date = Date(arr[end]["query"]["start-date"])
+  if Dates.isleapyear(date)
+    quarters[1] += 1
+  end
+  qtrOfYear = Dates.quarterofyear(date)
+  lastQtr = qtrOfYear === 1 ? 4 : qtrOfYear - 1
   dayOfQtr = Dates.dayofquarter(date)
+  currentPeriod = aggregate(arr[end-dayOfQtr+1:end])
+  lastPeriod = aggregate(arr[end-quarters[lastQtr]-dayOfQtr:end-quarters[lastQtr]])
+  diff = compare(currentPeriod, lastPeriod)
+  insights = generateInsights(diff, 5)
+  return insights
+end
 
+# Fix to correctly get yearLength for date by checking on which side of
+# the leap day it falls (if applicable)
+function yearToDate(arr::Array{Any, 1})
+  date = Date(arr[end]["query"]["start-date"])
+  yearLength = Dates.isleapyear(date-Date.year(1)) ? 366 : 365
+  dayOfYear = Dates.dayofyear(date)
+  currentPeriod = aggregate(arr[end-dayOfYear+1:end])
+  lastPeriod = aggregate(arr[end-yearLength-dayOfYear+1:end-yearLength])
+  diff = compare(currentPeriod, lastPeriod)
+  insights = generateInsights(diff, 5)
+  return insights
 end
 
 function dayByDay(arr::Array{Any, 1}, n::Int64)
