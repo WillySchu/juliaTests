@@ -103,6 +103,13 @@ function monthToDate(arr::Array{Any, 1})
   return insights
 end
 
+# Leave to finish later
+function qtrToDate(arr::Array{Any, 1})
+  date = Date(arr[end]["query"]["start-date"])
+  dayOfQtr = Dates.dayofquarter(date)
+
+end
+
 function dayByDay(arr::Array{Any, 1}, n::Int64)
   println("Comparing by day...")
   today = aggregate(arr[end:end])
