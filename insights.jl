@@ -8,11 +8,17 @@ function harvestInsights(arr::Array{Any,1})
   checkContiguousDates(days)
   if length(days) < 2
     error("Not enough data to process")
+  elseif length(days) == 2
+    compareArbitrary(days[2], days[1])
   end
 
   push!(results, weekToDate(days))
 
   push!(results, monthToDate(days))
+
+  push!(results, qtrToDate(days))
+
+  push!(results, yearToDate(days))
 
   # push!(results, dayByDay(days, 1))
   # if length(days) < 14
@@ -80,6 +86,13 @@ end
 
 function sortByDate!(arr::Array{Any, 1})
   sort!(arr, by=x->x["query"]["start-date"])
+end
+
+function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1})
+  current = aggregate(arr[1])
+  last = aggregate(arr[2])
+  diff = compare(current, last)
+  return generateInsights(diff, 5)
 end
 
 function weekToDate(arr::Array{Any, 1})
