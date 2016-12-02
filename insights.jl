@@ -16,19 +16,24 @@ function harvestInsights(arr::Array{Any,1})
     checkContiguousDates(days)
   end
 
-  # Check to ensure the following are possible
 
   date = Date(arr[end]["query"]["start-date"])
 
-  if Date.dayofweek(date) + 7 > length(days)
+  if Date.dayofweek(date) + 7 < length(days)
     push!(results, weekToDate(days))
   end
 
-  push!(results, monthToDate(days))
+  if Date.dayofmonth(date) + Date.daysinmonth(date - Date.month(1)) < length(days)
+    push!(results, monthToDate(days))
+  end
 
-  push!(results, qtrToDate(days))
+  if Date.dayofquarter(date) + 92 < length(days)
+    push!(results, qtrToDate(days))
+  end
 
-  # push!(results, yearToDate(days))
+  if Date.dayofyear(date) + 366 < length(days)
+    push!(results, yearToDate(days))
+  end
 
   # push!(results, dayByDay(days, 1))
   # if length(days) < 14
