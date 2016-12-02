@@ -4,13 +4,19 @@ function harvestInsights(arr::Array{Any,1})
   println("Harvesting...")
   results = []
 
-  days = splitByDate(arr[1])
-  checkContiguousDates(days)
-  if length(days) < 2
-    error("Not enough data to process")
-  elseif length(days) == 2
-    compareArbitrary(days[2], days[1])
+  if length(arr) < 1
+    error("No Data Provided")
+  elseif length(arr) == 1
+    days = splitByDate(arr[1])
+    checkContiguousDates(days)
+  elseif length(arr) == 2
+    return [compareArbitrary(arr[2], arr[1])]
+  else
+    days = arr
+    checkContiguousDates(days)
   end
+
+  # Check to ensure the following are possible
 
   push!(results, weekToDate(days))
 
