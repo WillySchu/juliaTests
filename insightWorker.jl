@@ -10,6 +10,7 @@ pubsub = RedisConnection()
 function start(o)
   println("starting")
   envelope = JSON.parse(o[2])
+  println(length(envelope))
 
   try
     insights = Insights.harvestInsights(envelope["payload"])

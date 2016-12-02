@@ -20,22 +20,22 @@ function harvestInsights(arr::Array{Any,1})
 
   push!(results, yearToDate(days))
 
-  # push!(results, dayByDay(days, 1))
-  # if length(days) < 14
-  #   return results
-  # end
-  #
-  # push!(results, weekByWeek(days, 1))
-  # if length(days) < 60
-  #   return results
-  # end
+  push!(results, dayByDay(days, 1))
+  if length(days) < 14
+    return results
+  end
 
-  # push!(results, weekByWeek(days))
-  # if length(days) < 730
-  #   return results
-  # end
+  push!(results, weekByWeek(days, 1))
+  if length(days) < 60
+    return results
+  end
 
-  # push!(results, yearByYear(days))
+  push!(results, weekByWeek(days))
+  if length(days) < 730
+    return results
+  end
+
+  push!(results, yearByYear(days))
 
   return results
 end
