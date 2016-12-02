@@ -18,30 +18,34 @@ function harvestInsights(arr::Array{Any,1})
 
   # Check to ensure the following are possible
 
-  push!(results, weekToDate(days))
+  date = Date(arr[end]["query"]["start-date"])
+
+  if Date.dayofweek(date) + 7 > length(days)
+    push!(results, weekToDate(days))
+  end
 
   push!(results, monthToDate(days))
 
   push!(results, qtrToDate(days))
 
-  push!(results, yearToDate(days))
+  # push!(results, yearToDate(days))
 
-  push!(results, dayByDay(days, 1))
-  if length(days) < 14
-    return results
-  end
+  # push!(results, dayByDay(days, 1))
+  # if length(days) < 14
+  #   return results
+  # end
+  #
+  # push!(results, weekByWeek(days, 1))
+  # if length(days) < 60
+  #   return results
+  # end
+  #
+  # push!(results, monthByMonth(days))
+  # if length(days) < 730
+  #   return results
+  # end
 
-  push!(results, weekByWeek(days, 1))
-  if length(days) < 60
-    return results
-  end
-
-  push!(results, weekByWeek(days))
-  if length(days) < 730
-    return results
-  end
-
-  push!(results, yearByYear(days))
+  # push!(results, yearByYear(days))
 
   return results
 end
@@ -123,6 +127,7 @@ function monthToDate(arr::Array{Any, 1})
 end
 
 function qtrToDate(arr::Array{Any, 1})
+  println("qtrToDate")
   quarters = [90, 91, 92, 92]
   date = Date(arr[end]["query"]["start-date"])
   if Dates.isleapyear(date)
