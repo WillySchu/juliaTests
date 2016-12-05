@@ -122,7 +122,6 @@ end
 
 function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64)
   offset += len
-  println(length(arr))
   currentPeriod = arr[end-len+1:end]
   lastPeriod = arr[end-offset-len+1:end-offset]
   return compareArbitrary(currentPeriod, lastPeriod)
@@ -165,6 +164,7 @@ end
 # Fix to correctly get yearLength for date by checking on which side of
 # the leap day it falls (if applicable)
 function yearToDate(arr::Array{Any, 1})
+  println("yearToDate")
   date = Date(arr[end]["query"]["start-date"])
   yearLength = checkLeapDay(date, date - Dates.Year(1)) ? 366 : 365
   dayOfYear = Dates.dayofyear(date)
@@ -216,7 +216,6 @@ end
 # end
 
 function generateInsights(diff::Dict{String, Any}, n::Int64)
-  println("Generating...")
   insights = []
   meta = diff["meta"]
   for met in keys(diff)
@@ -246,12 +245,10 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
     end
   end
   sort!(insights, by=x->x["significance"], rev=true)
-  println("Generated")
   return insights[1:n]
 end
 
 function compare(first::Dict{String, Any}, second::Dict{String, Any})
-  println("Comparing...")
   inn = []
   out = []
   diff = Dict{String, Any}()
