@@ -150,7 +150,7 @@ end
 function yearToDate(arr::Array{Any, 1})
 
   date = Date(arr[end]["query"]["start-date"])
-  yearLength = Dates.isleapyear(date-Date.year(1)) ? 366 : 365
+  yearLength = Dates.isleapyear(date-Dates.year(1)) ? 366 : 365
   dayOfYear = Dates.dayofyear(date)
   currentPeriod = arr[end-dayOfYear+1:end]
   lastPeriod = arr[end-yearLength-dayOfYear+1:end-yearLength]
