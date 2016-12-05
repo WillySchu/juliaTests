@@ -230,14 +230,7 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
       insight["dimensions"] = dim
       insight["type"] = "type"
       insight["percentChange"] = diff[met][dim]["score"]
-      mag = diff[met][dim]["magnitude"]
-      insight["magnitude"] = mag
-      insight["mag1"] = diff[met][dim]["mag1"]
-      if haskey(diff[met][dim], "mag2")
-        insight["mag2"] = diff[met][dim]["mag2"]
-      end
-      norm = mag / diff["meta"]["largest"][met] + 1
-      insight["significance"] = norm + abs(insight["percentChange"])
+      insight["significance"] = scoreSignificance(insight)
       # TODO: handle infinity better
       if insight["percentChange"] != Inf
         push!(insights, insight)
@@ -246,6 +239,17 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
   end
   sort!(insights, by=x->x["significance"], rev=true)
   return insights[1:n]
+end
+
+function scoreSignificance(insight)
+  mag = diff[met][dim]["magnitude"]
+  insight["magnitude"] = mag
+  insight["mag1"] = diff[met][dim]["mag1"]
+  if haskey(diff[met][dim], "mag2")
+    insight["mag2"] = diff[met][dim]["mag2"]
+  end
+  norm = mag / diff["meta"]["largest"][met] + 1
+  return norm + abs(insight["percentChange"])
 end
 
 function compare(first::Dict{String, Any}, second::Dict{String, Any})
