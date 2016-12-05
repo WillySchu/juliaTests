@@ -21,23 +21,23 @@ function harvestInsights(arr::Array{Any,1})
   dateStr = match(dateRegex, arr[end]["query"]["start-date"])
   date = Date(dateStr.match)
 
-  results["todayvsYesterday"] = todayvsYesterday(days)
+  results["dayvsYesterday"] = dayvsYesterday(days)
 
-  # if Dates.dayofweek(date) + 7 < length(days)
-  #   results["weekToDate"] = weekToDate(days)
-  # end
-  #
-  # if Dates.dayofmonth(date) + Dates.daysinmonth(date - Dates.Month(1)) < length(days)
-  #   results["monthToDate"] = monthToDate(days)
-  # end
-  #
-  # if Dates.dayofquarter(date) + 92 < length(days)
-  #   results["qtrToDate"] = qtrToDate(days)
-  # end
-  #
-  # if Dates.dayofyear(date) + 366 < length(days)
-  #   results["yearToDate"] = yearToDate(days)
-  # end
+  if Dates.dayofweek(date) + 7 < length(days)
+    results["weekToDate"] = weekToDate(days)
+  end
+
+  if Dates.dayofmonth(date) + Dates.daysinmonth(date - Dates.Month(1)) < length(days)
+    results["monthToDate"] = monthToDate(days)
+  end
+
+  if Dates.dayofquarter(date) + 92 < length(days)
+    results["qtrToDate"] = qtrToDate(days)
+  end
+
+  if Dates.dayofyear(date) + 366 < length(days)
+    results["yearToDate"] = yearToDate(days)
+  end
 
   # push!(results, dayByDay(days, 1))
   # if length(days) < 14
@@ -167,7 +167,7 @@ function yearToDate(arr::Array{Any, 1})
   return compareArbitrary(currentPeriod, lastPeriod)
 end
 
-function todayvsYesterday(arr::Array{Any, 1})
+function dayvsYesterday(arr::Array{Any, 1})
   println("todayvsYesterday")
   println("length ", length(arr))
   return arbitraryPeriod(arr, 1, 0)
