@@ -21,20 +21,22 @@ function harvestInsights(arr::Array{Any,1})
   dateStr = match(dateRegex, arr[end]["query"]["start-date"])
   date = Date(dateStr.match)
 
-  if Dates.dayofweek(date) + 7 < length(days)
-    results["weekToDate"] = weekToDate(days)
-  end
+  results["todayvsYesterday"] = todayvsYesterday(days)
 
+  # if Dates.dayofweek(date) + 7 < length(days)
+  #   results["weekToDate"] = weekToDate(days)
+  # end
+  #
   # if Dates.dayofmonth(date) + Dates.daysinmonth(date - Dates.Month(1)) < length(days)
-  #   push!(results, monthToDate(days))
+  #   results["monthToDate"] = monthToDate(days)
   # end
   #
   # if Dates.dayofquarter(date) + 92 < length(days)
-  #   push!(results, qtrToDate(days))
+  #   results["qtrToDate"] = qtrToDate(days)
   # end
   #
   # if Dates.dayofyear(date) + 366 < length(days)
-  #   push!(results, yearToDate(days))
+  #   results["yearToDate"] = yearToDate(days)
   # end
 
   # push!(results, dayByDay(days, 1))
@@ -111,6 +113,14 @@ function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1})
   return generateInsights(diff, 5)
 end
 
+function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64)
+  offset += len
+  println(length(arr))
+  currentPeriod = arr[end-len+1:end]
+  lastPeriod = arr[end-offset-len+1:end-offset]
+  return compareArbitrary(currentPeriod, lastPeriod)
+end
+
 function weekToDate(arr::Array{Any, 1})
   println("Week to Date")
   startDate = Date(arr[end]["query"]["start-date"])
@@ -155,6 +165,12 @@ function yearToDate(arr::Array{Any, 1})
   currentPeriod = arr[end-dayOfYear+1:end]
   lastPeriod = arr[end-yearLength-dayOfYear+1:end-yearLength]
   return compareArbitrary(currentPeriod, lastPeriod)
+end
+
+function todayvsYesterday(arr::Array{Any, 1})
+  println("todayvsYesterday")
+  println("length ", length(arr))
+  return arbitraryPeriod(arr, 1, 0)
 end
 
 function dayByDay(arr::Array{Any, 1}, n::Int64)
