@@ -341,7 +341,11 @@ function aggregate(arr::Array{Any, 1})
       dimName = ""
       for j = 1:length(day["rows"][1])
         if day["columnHeaders"][j]["columnType"] == "DIMENSION"
-          dimName = string(dimName, day["rows"][i][j])
+          if length(dimName) == 0
+            dimName = string(dimName, day["rows"][i][j])
+          else
+            dimName = string(dimName, ',', day["rows"][i][j])
+          end
         else
           met = day["columnHeaders"][j]["name"]
           if haskey(agg[met], dimName)
