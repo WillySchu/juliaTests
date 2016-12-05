@@ -226,7 +226,7 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
       insight = Dict{String, Any}()
       insight["startDate"] = meta["startDate"]
       insight["endDate"] = meta["endDate"]
-      insight["metrics"] = met
+      insight["metric"] = met
       insight["dimensions"] = dim
       insight["type"] = "type"
       insight["percentChange"] = diff[met][dim]["score"]
