@@ -4,7 +4,7 @@ dateRegex = r".+?(?=T)"
 
 function harvestInsights(arr::Array{Any,1})
   println("Harvesting...")
-  results = []
+  results = Dict{String, Array}()
 
   if length(arr) < 1
     error("No Data Provided")
@@ -22,20 +22,20 @@ function harvestInsights(arr::Array{Any,1})
   date = Date(dateStr.match)
 
   if Dates.dayofweek(date) + 7 < length(days)
-    push!(results, weekToDate(days))
+    results["weekToDate"] = weekToDate(days)
   end
 
-  if Dates.dayofmonth(date) + Dates.daysinmonth(date - Dates.Month(1)) < length(days)
-    push!(results, monthToDate(days))
-  end
-
-  if Dates.dayofquarter(date) + 92 < length(days)
-    push!(results, qtrToDate(days))
-  end
-
-  if Dates.dayofyear(date) + 366 < length(days)
-    push!(results, yearToDate(days))
-  end
+  # if Dates.dayofmonth(date) + Dates.daysinmonth(date - Dates.Month(1)) < length(days)
+  #   push!(results, monthToDate(days))
+  # end
+  #
+  # if Dates.dayofquarter(date) + 92 < length(days)
+  #   push!(results, qtrToDate(days))
+  # end
+  #
+  # if Dates.dayofyear(date) + 366 < length(days)
+  #   push!(results, yearToDate(days))
+  # end
 
   # push!(results, dayByDay(days, 1))
   # if length(days) < 14
