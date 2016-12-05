@@ -86,8 +86,8 @@ function checkContiguousDates(arr::Array{Any, 1})
       lastDate = Date(day["query"]["start-date"])
       continue
     end
-    diff = Date(day["query"]["start-date"]) - lastDate
-    if diff > oneDay
+    dif = Date(day["query"]["start-date"]) - lastDate
+    if dif > oneDay
       error("data set not contiguous")
     end
     lastDate = Date(day["query"]["start-date"])
@@ -116,8 +116,8 @@ end
 function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1})
   current = aggregate(current)
   last = aggregate(last)
-  diff = compare(current, last)
-  return generateInsights(diff, 5)
+  dif = compare(current, last)
+  return generateInsights(dif, 5)
 end
 
 function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64)
@@ -215,22 +215,22 @@ end
 #   return compareArbitrary(thisYear, lastYear)
 # end
 
-function generateInsights(diff::Dict{String, Any}, n::Int64)
+function generateInsights(dif::Dict{String, Any}, n::Int64)
   insights = []
-  meta = diff["meta"]
-  for met in keys(diff)
+  meta = dif["meta"]
+  for met in keys(dif)
     if met == "meta"
       continue
     end
-    for dim in keys(diff[met])
+    for dim in keys(dif[met])
       insight = Dict{String, Any}()
       insight["startDate"] = meta["startDate"]
       insight["endDate"] = meta["endDate"]
       insight["metric"] = met
       insight["dimensions"] = dim
       insight["type"] = "type"
-      insight["percentChange"] = diff[met][dim]["score"]
-      insight["significance"] = scoreSignificance(insight)
+      insight["percentChange"] = dif[met][dim]["score"]
+      insight["significance"] = scoreSignificance(insight, met, dim, dif)
       # TODO: handle infinity better
       if insight["percentChange"] != Inf
         push!(insights, insight)
@@ -241,21 +241,21 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
   return insights[1:n]
 end
 
-function scoreSignificance(insight)
-  mag = diff[met][dim]["magnitude"]
+function scoreSignificance(insight, met, dim, dif)
+  mag = dif[met][dim]["magnitude"]
   insight["magnitude"] = mag
-  insight["mag1"] = diff[met][dim]["mag1"]
-  if haskey(diff[met][dim], "mag2")
-    insight["mag2"] = diff[met][dim]["mag2"]
+  insight["mag1"] = dif[met][dim]["mag1"]
+  if haskey(dif[met][dim], "mag2")
+    insight["mag2"] = dif[met][dim]["mag2"]
   end
-  norm = mag / diff["meta"]["largest"][met] + 1
+  norm = mag / dif["meta"]["largest"][met] + 1
   return norm + abs(insight["percentChange"])
 end
 
 function compare(first::Dict{String, Any}, second::Dict{String, Any})
   inn = []
   out = []
-  diff = Dict{String, Any}()
+  dif = Dict{String, Any}()
   largest = Dict{String, Float64}()
   for met in keys(first)
     if met == "meta"
@@ -263,11 +263,11 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
     end
     largest[met] = 0
 
-    if !haskey(diff, met)
-      diff[met] = Dict{String, Any}()
+    if !haskey(dif, met)
+      dif[met] = Dict{String, Any}()
     end
     for dim in keys(first[met])
-      diff[met][dim] = Dict{String, Float64}()
+      dif[met][dim] = Dict{String, Float64}()
       if haskey(second[met], dim)
         if largest[met] < second[met][dim] + first[met][dim]
           largest[met] = second[met][dim] + first[met][dim]
@@ -275,23 +275,23 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
         push!(inn, dim)
         if first[met][dim] == 0
           if second[met][dim] == 0
-            diff[met][dim]["score"] = 0
+            dif[met][dim]["score"] = 0
           else
-            diff[met][dim]["score"] = -1
+            dif[met][dim]["score"] = -1
           end
         else
-          diff[met][dim]["score"] = (first[met][dim] - second[met][dim]) / second[met][dim]
+          dif[met][dim]["score"] = (first[met][dim] - second[met][dim]) / second[met][dim]
         end
-        diff[met][dim]["magnitude"] = first[met][dim] + second[met][dim]
-        diff[met][dim]["mag1"] = first[met][dim]
-        diff[met][dim]["mag2"] = second[met][dim]
+        dif[met][dim]["magnitude"] = first[met][dim] + second[met][dim]
+        dif[met][dim]["mag1"] = first[met][dim]
+        dif[met][dim]["mag2"] = second[met][dim]
       else
         if largest[met] < first[met][dim]
           largest[met] = first[met][dim]
         end
-        diff[met][dim]["score"] = Inf
-        diff[met][dim]["magnitude"] = first[met][dim]
-        diff[met][dim]["mag1"] = first[met][dim]
+        dif[met][dim]["score"] = Inf
+        dif[met][dim]["magnitude"] = first[met][dim]
+        dif[met][dim]["mag1"] = first[met][dim]
         push!(out, dim)
       end
     end
@@ -300,8 +300,8 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
   meta["startDate"] = second["meta"]["startDate"]
   meta["endDate"] = first["meta"]["endDate"]
   meta["largest"] = largest
-  diff["meta"] = meta
-  return diff
+  dif["meta"] = meta
+  return dif
 end
 
 function aggregate(arr::Array{Any, 1})
