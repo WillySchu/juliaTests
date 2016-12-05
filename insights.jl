@@ -248,7 +248,7 @@ function scoreSignificance(insight, met, dim, dif)
   if haskey(dif[met][dim], "mag2")
     insight["mag2"] = dif[met][dim]["mag2"]
   end
-  norm = mag / dif["meta"]["largest"][met] + 1
+  norm = mag / dif["meta"]["largest"][met]["mag"] + 1
   return norm + abs(insight["percentChange"])
 end
 
@@ -256,12 +256,14 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
   inn = []
   out = []
   dif = Dict{String, Any}()
-  largest = Dict{String, Float64}()
+  largest = Dict{String, Any}()
   for met in keys(first)
     if met == "meta"
       continue
     end
-    largest[met] = 0
+    largest[met] = Dict{String, Float64}()
+    largest[met]["mag"] = 0
+    largest[met]["perc"] = 0
 
     if !haskey(dif, met)
       dif[met] = Dict{String, Any}()
@@ -269,8 +271,8 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
     for dim in keys(first[met])
       dif[met][dim] = Dict{String, Float64}()
       if haskey(second[met], dim)
-        if largest[met] < second[met][dim] + first[met][dim]
-          largest[met] = second[met][dim] + first[met][dim]
+        if largest[met]["mag"] < second[met][dim] + first[met][dim]
+          largest[met]["mag"] = second[met][dim] + first[met][dim]
         end
         push!(inn, dim)
         if first[met][dim] == 0
@@ -286,8 +288,8 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
         dif[met][dim]["mag1"] = first[met][dim]
         dif[met][dim]["mag2"] = second[met][dim]
       else
-        if largest[met] < first[met][dim]
-          largest[met] = first[met][dim]
+        if largest[met]["mag"] < first[met][dim]
+          largest[met]["mag"] = first[met][dim]
         end
         dif[met][dim]["score"] = Inf
         dif[met][dim]["magnitude"] = first[met][dim]
