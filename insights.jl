@@ -152,48 +152,38 @@ function yearToDate(arr::Array{Any, 1})
   date = Date(arr[end]["query"]["start-date"])
   yearLength = Dates.isleapyear(date-Date.year(1)) ? 366 : 365
   dayOfYear = Dates.dayofyear(date)
-  currentPeriod = aggregate(arr[end-dayOfYear+1:end])
-  lastPeriod = aggregate(arr[end-yearLength-dayOfYear+1:end-yearLength])
-  diff = compare(currentPeriod, lastPeriod)
-  insights = generateInsights(diff, 5)
-  return insights
+  currentPeriod = arr[end-dayOfYear+1:end]
+  lastPeriod = arr[end-yearLength-dayOfYear+1:end-yearLength]
+  return compareArbitrary(currentPeriod, lastPeriod)
 end
 
 function dayByDay(arr::Array{Any, 1}, n::Int64)
   println("Comparing by day...")
-  today = aggregate(arr[end:end])
-  yesterday = aggregate(arr[end-n:end-n])
-  diff = compare(today, yesterday)
-  insights = generateInsights(diff, 5)
-  return insights
+  today = arr[end:end]
+  yesterday = arr[end-n:end-n]
+  return compareArbitrary(today, yesterday)
 end
 
 function weekByWeek(arr::Array{Any, 1}, w::Int64)
   println("Comparing by week...")
   n = 7 * w
-  thisWeek = aggregate(arr[end-6:end])
-  lastWeek = aggregate(arr[end-6-n:end-n])
-  diff = compare(thisWeek, lastWeek)
-  insights = generateInsights(diff, 5)
-  return insights
+  thisWeek = arr[end-6:end]
+  lastWeek = arr[end-6-n:end-n]
+  return compareArbitrary(thisWeek, lastWeek)
 end
 
 function monthByMonth(arr::Array{Any, 1})
   println("Comparing by month")
-  thisMonth = aggregate(arr[end-29:end])
-  lastMonth = aggregate(arr[end-59:end-30])
-  diff = compare(thisMonth, lastMonth)
-  insights = generateInsights(diff, 5)
-  return insights
+  thisMonth = arr[end-29:end]
+  lastMonth = arr[end-59:end-30]
+  return compareArbitrary(thisMonth, lastMonth)
 end
 
 function yearByYear(arr::Array{Any, 1})
   println("comparing by year...")
-  thisYear = aggregate(arr[end-264:end])
-  lastYear = aggregate(arr[end-719:end-365])
-  diff = compare(thisYear, lastYear)
-  insights = generateInsights(diff, 5)
-  return insights
+  thisYear = arr[end-264:end]
+  lastYear = arr[end-719:end-365]
+  return compareArbitrary(thisYear, lastYear)
 end
 
 function generateInsights(diff::Dict{String, Any}, n::Int64)
