@@ -1,5 +1,7 @@
 module Insights
 
+dateRegex = r".+?(?=T)"
+
 function harvestInsights(arr::Array{Any,1})
   println("Harvesting...")
   results = []
@@ -16,22 +18,22 @@ function harvestInsights(arr::Array{Any,1})
     checkContiguousDates(days)
   end
 
+  dateStr = match(dateRegex, arr[end]["query"]["start-date"])
+  date = Date(dateStr.match)
 
-  date = Date(arr[end]["query"]["start-date"])
-
-  if Date.dayofweek(date) + 7 < length(days)
+  if Dates.dayofweek(date) + 7 < length(days)
     push!(results, weekToDate(days))
   end
 
-  if Date.dayofmonth(date) + Date.daysinmonth(date - Date.month(1)) < length(days)
+  if Dates.dayofmonth(date) + Dates.daysinmonth(date - Dates.Month(1)) < length(days)
     push!(results, monthToDate(days))
   end
 
-  if Date.dayofquarter(date) + 92 < length(days)
+  if Dates.dayofquarter(date) + 92 < length(days)
     push!(results, qtrToDate(days))
   end
 
-  if Date.dayofyear(date) + 366 < length(days)
+  if Dates.dayofyear(date) + 366 < length(days)
     push!(results, yearToDate(days))
   end
 
@@ -56,7 +58,6 @@ function harvestInsights(arr::Array{Any,1})
 end
 
 function splitByDate(data::Dict{String, Any})
-  dateRegex = r".+?(?=T)"
   result = []
   splits = Dict{String, Any}()
 
@@ -104,35 +105,33 @@ function sortByDate!(arr::Array{Any, 1})
 end
 
 function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1})
-  current = aggregate(arr[1])
-  last = aggregate(arr[2])
+  current = aggregate(current)
+  last = aggregate(last)
   diff = compare(current, last)
   return generateInsights(diff, 5)
 end
 
 function weekToDate(arr::Array{Any, 1})
+  println("Week to Date")
   startDate = Date(arr[end]["query"]["start-date"])
   dayOfWeek = Dates.dayofweek(startDate)
-  currentPeriod = aggregate(arr[end-dayOfWeek+1:end])
-  lastPeriod = aggregate(arr[end-7-dayOfWeek+1:end-7])
-  diff = compare(currentPeriod, lastPeriod)
-  insights = generateInsights(diff, 5)
-  return insights
+  currentPeriod = arr[end-dayOfWeek+1:end]
+  lastPeriod = arr[end-7-dayOfWeek+1:end-7]
+  return compareArbitrary(currentPeriod, lastPeriod)
 end
 
 function monthToDate(arr::Array{Any, 1})
+  println("Month to Date")
   date = Date(arr[end]["query"]["start-date"])
   dayOfMonth = Dates.dayofmonth(date)
   daysInPrevMonth = Dates.daysinmonth(date - Dates.Month(1))
-  currentPeriod = aggregate(arr[end-dayOfMonth+1:end])
-  lastPeriod = aggregate(arr[end-dayOfMonth-daysInPrevMonth+1:end-daysInPrevMonth])
-  diff = compare(currentPeriod, lastPeriod)
-  insights = generateInsights(diff, 5)
-  return insights
+  currentPeriod = arr[end-dayOfMonth+1:end]
+  lastPeriod = arr[end-dayOfMonth-daysInPrevMonth+1:end-daysInPrevMonth]
+  return compareArbitrary(currentPeriod, lastPeriod)
 end
 
 function qtrToDate(arr::Array{Any, 1})
-  println("qtrToDate")
+  println("Quarter to Date")
   quarters = [90, 91, 92, 92]
   date = Date(arr[end]["query"]["start-date"])
   if Dates.isleapyear(date)
@@ -141,16 +140,15 @@ function qtrToDate(arr::Array{Any, 1})
   qtrOfYear = Dates.quarterofyear(date)
   lastQtr = qtrOfYear === 1 ? 4 : qtrOfYear - 1
   dayOfQtr = Dates.dayofquarter(date)
-  currentPeriod = aggregate(arr[end-dayOfQtr+1:end])
-  lastPeriod = aggregate(arr[end-quarters[lastQtr]-dayOfQtr:end-quarters[lastQtr]])
-  diff = compare(currentPeriod, lastPeriod)
-  insights = generateInsights(diff, 5)
-  return insights
+  currentPeriod = arr[end-dayOfQtr+1:end]
+  lastPeriod = arr[end-quarters[lastQtr]-dayOfQtr:end-quarters[lastQtr]]
+  return compareArbitrary(currentPeriod, lastPeriod)
 end
 
 # Fix to correctly get yearLength for date by checking on which side of
 # the leap day it falls (if applicable)
 function yearToDate(arr::Array{Any, 1})
+
   date = Date(arr[end]["query"]["start-date"])
   yearLength = Dates.isleapyear(date-Date.year(1)) ? 366 : 365
   dayOfYear = Dates.dayofyear(date)
@@ -229,6 +227,7 @@ function generateInsights(diff::Dict{String, Any}, n::Int64)
     end
   end
   sort!(insights, by=x->x["significance"], rev=true)
+  println("Generated")
   return insights[1:n]
 end
 
@@ -291,7 +290,6 @@ function aggregate(arr::Array{Any, 1})
   agg["meta"] = meta
   dimensions = arr[1]["query"]["dimensions"]
   metrics = arr[1]["query"]["metrics"]
-  dateRegex = r".+?(?=T)"
   for met in metrics
     agg[met] = Dict()
   end
