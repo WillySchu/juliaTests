@@ -2,6 +2,14 @@ module Insights
 
 dateRegex = r".+?(?=T)"
 
+macro swap(x,y)
+  quote
+    local tmp = $(esc(x))
+    $(esc(x)) = $(esc(y))
+    $(esc(y)) = tmp
+   end
+end
+
 function harvestInsights(arr::Array{Any,1})
   println("Harvesting...")
   results = Dict{String, Array}()
@@ -37,24 +45,8 @@ function harvestInsights(arr::Array{Any,1})
 
   if Dates.dayofyear(date) + 366 < length(days)
     results["yearToDate"] = yearToDate(days)
+    results["dayvsLastYear"] = dayvsLastYear(days)
   end
-
-  # push!(results, dayByDay(days, 1))
-  # if length(days) < 14
-  #   return results
-  # end
-  #
-  # push!(results, weekByWeek(days, 1))
-  # if length(days) < 60
-  #   return results
-  # end
-  #
-  # push!(results, monthByMonth(days))
-  # if length(days) < 730
-  #   return results
-  # end
-
-  # push!(results, yearByYear(days))
 
   return results
 end
@@ -99,6 +91,21 @@ function checkContiguousDates(arr::Array{Any, 1})
       error("data set not contiguous")
     end
     lastDate = Date(day["query"]["start-date"])
+  end
+end
+
+function checkLeapDay(date1, date2)
+  if date2 > date1
+    @swap(date1, date2)
+  end
+  d1 = Dates.isleapyear(date1)
+  d2 = Dates.isleapyear(date2)
+  if d1
+    return Date(Dates.year(date1), 29, 2) <= date1
+  elseif d2
+    return Date(Dates.year(date2), 29 ,2) >= date2
+  else
+    return false
   end
 end
 
@@ -158,9 +165,8 @@ end
 # Fix to correctly get yearLength for date by checking on which side of
 # the leap day it falls (if applicable)
 function yearToDate(arr::Array{Any, 1})
-
   date = Date(arr[end]["query"]["start-date"])
-  yearLength = Dates.isleapyear(date-Dates.year(1)) ? 366 : 365
+  yearLength = checkLeapDay(date, date - Dates.Year(1)) ? 366 : 365
   dayOfYear = Dates.dayofyear(date)
   currentPeriod = arr[end-dayOfYear+1:end]
   lastPeriod = arr[end-yearLength-dayOfYear+1:end-yearLength]
@@ -168,39 +174,46 @@ function yearToDate(arr::Array{Any, 1})
 end
 
 function dayvsYesterday(arr::Array{Any, 1})
-  println("todayvsYesterday")
-  println("length ", length(arr))
+  println("dayvsYesterday")
   return arbitraryPeriod(arr, 1, 0)
 end
 
-function dayByDay(arr::Array{Any, 1}, n::Int64)
-  println("Comparing by day...")
-  today = arr[end:end]
-  yesterday = arr[end-n:end-n]
-  return compareArbitrary(today, yesterday)
+function dayvsLastYear(arr::Array{Any, 1})
+  println("dayvsLastYear")
+  yearLength = checkLeapDay(date, date - Dates.Year(1)) ? 366 : 365
+  return arbitraryPeriod(arr, 1, yearLength)
 end
 
-function weekByWeek(arr::Array{Any, 1}, w::Int64)
-  println("Comparing by week...")
-  n = 7 * w
-  thisWeek = arr[end-6:end]
-  lastWeek = arr[end-6-n:end-n]
-  return compareArbitrary(thisWeek, lastWeek)
-end
+# Probably can remove the following commented functions
 
-function monthByMonth(arr::Array{Any, 1})
-  println("Comparing by month")
-  thisMonth = arr[end-29:end]
-  lastMonth = arr[end-59:end-30]
-  return compareArbitrary(thisMonth, lastMonth)
-end
-
-function yearByYear(arr::Array{Any, 1})
-  println("comparing by year...")
-  thisYear = arr[end-264:end]
-  lastYear = arr[end-719:end-365]
-  return compareArbitrary(thisYear, lastYear)
-end
+# function dayByDay(arr::Array{Any, 1}, n::Int64)
+#   println("Comparing by day...")
+#   today = arr[end:end]
+#   yesterday = arr[end-n:end-n]
+#   return compareArbitrary(today, yesterday)
+# end
+#
+# function weekByWeek(arr::Array{Any, 1}, w::Int64)
+#   println("Comparing by week...")
+#   n = 7 * w
+#   thisWeek = arr[end-6:end]
+#   lastWeek = arr[end-6-n:end-n]
+#   return compareArbitrary(thisWeek, lastWeek)
+# end
+#
+# function monthByMonth(arr::Array{Any, 1})
+#   println("Comparing by month")
+#   thisMonth = arr[end-29:end]
+#   lastMonth = arr[end-59:end-30]
+#   return compareArbitrary(thisMonth, lastMonth)
+# end
+#
+# function yearByYear(arr::Array{Any, 1})
+#   println("comparing by year...")
+#   thisYear = arr[end-264:end]
+#   lastYear = arr[end-719:end-365]
+#   return compareArbitrary(thisYear, lastYear)
+# end
 
 function generateInsights(diff::Dict{String, Any}, n::Int64)
   println("Generating...")
@@ -341,4 +354,5 @@ function aggregate(arr::Array{Any, 1})
   end
   return agg
 end
+
 end
