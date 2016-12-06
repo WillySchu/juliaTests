@@ -56,7 +56,12 @@ function splitByDate(data::Dict{String, Any})::Array{Any, 1}
   splits = Dict{String, Any}()
 
   for row in data["rows"]
-    date = match(dateRegex, row[1]).match
+    println(row[1])
+    if length(row[1]) > 10
+      date = match(dateRegex, row[1]).match
+    else
+      date = row[1]
+    end
     if !haskey(splits, date)
       splits[date] = []
     end
