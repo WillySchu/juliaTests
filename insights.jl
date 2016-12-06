@@ -10,6 +10,8 @@ macro swap(x,y)
    end
 end
 
+# Types: [dayvsYesterday, weekToDate, monthToDate, qtrToDate, yearToDate dayvsLastYear]
+
 function harvestInsights(arr::Array{Any,1})::Dict{String, Any}
   println("Harvesting...")
   results = Dict{String, Array}()
@@ -56,7 +58,6 @@ function splitByDate(data::Dict{String, Any})::Array{Any, 1}
   splits = Dict{String, Any}()
 
   for row in data["rows"]
-    println(row[1])
     if length(row[1]) > 10
       date = match(dateRegex, row[1]).match
     else
@@ -258,7 +259,7 @@ function scoreSignificance(insight, met, dim, dif)::Float64
     insight["mag2"] = dif[met][dim]["mag2"]
   end
   normMag = mag / dif["meta"]["largest"][met]["mag"]
-  normPerc = insight["percentChange"] / dif["meta"]["largest"][met]["perc"]
+  normPerc = abs(insight["percentChange"]) / dif["meta"]["largest"][met]["perc"]
   return normMag + normPerc
 end
 
