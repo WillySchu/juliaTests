@@ -248,8 +248,9 @@ function scoreSignificance(insight, met, dim, dif)
   if haskey(dif[met][dim], "mag2")
     insight["mag2"] = dif[met][dim]["mag2"]
   end
-  norm = mag / dif["meta"]["largest"][met]["mag"] + 1
-  return norm + abs(insight["percentChange"])
+  normMag = mag / dif["meta"]["largest"][met]["mag"]
+  normPerc = insight["percentChange"] / dif["meta"]["largest"][met]["perc"]
+  return normMag + normPerc
 end
 
 function compare(first::Dict{String, Any}, second::Dict{String, Any})
@@ -295,6 +296,10 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
         dif[met][dim]["magnitude"] = first[met][dim]
         dif[met][dim]["mag1"] = first[met][dim]
         push!(out, dim)
+      end
+      if largest[met]["perc"] < dif[met][dim]["score"]
+        largest[met]["perc"] = dif[met][dim]["score"] == Inf ?
+          largest[met]["perc"] : dif[met][dim]["score"]
       end
     end
   end
