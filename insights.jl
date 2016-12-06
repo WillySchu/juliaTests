@@ -51,7 +51,7 @@ function harvestInsights(arr::Array{Any,1})
   return results
 end
 
-function splitByDate(data::Dict{String, Any})
+function splitByDate(data::Dict{String, Any})::Array{Any, 1}
   result = []
   splits = Dict{String, Any}()
 
@@ -94,7 +94,7 @@ function checkContiguousDates(arr::Array{Any, 1})
   end
 end
 
-function checkLeapDay(date1, date2)
+function checkLeapDay(date1, date2)::Bool
   if date2 > date1
     @swap(date1, date2)
   end
@@ -113,21 +113,21 @@ function sortByDate!(arr::Array{Any, 1})
   sort!(arr, by=x->x["query"]["start-date"])
 end
 
-function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1})
+function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1})::Array{Any, 1}
   current = aggregate(current)
   last = aggregate(last)
   dif = compare(current, last)
   return generateInsights(dif, 5)
 end
 
-function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64)
+function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64)::Array{Any, 1}
   offset += len
   currentPeriod = arr[end-len+1:end]
   lastPeriod = arr[end-offset-len+1:end-offset]
   return compareArbitrary(currentPeriod, lastPeriod)
 end
 
-function weekToDate(arr::Array{Any, 1})
+function weekToDate(arr::Array{Any, 1})::Array{Any, 1}
   println("Week to Date")
   startDate = Date(arr[end]["query"]["start-date"])
   dayOfWeek = Dates.dayofweek(startDate)
@@ -136,7 +136,7 @@ function weekToDate(arr::Array{Any, 1})
   return compareArbitrary(currentPeriod, lastPeriod)
 end
 
-function monthToDate(arr::Array{Any, 1})
+function monthToDate(arr::Array{Any, 1})::Array{Any, 1}
   println("Month to Date")
   date = Date(arr[end]["query"]["start-date"])
   dayOfMonth = Dates.dayofmonth(date)
@@ -146,7 +146,7 @@ function monthToDate(arr::Array{Any, 1})
   return compareArbitrary(currentPeriod, lastPeriod)
 end
 
-function qtrToDate(arr::Array{Any, 1})
+function qtrToDate(arr::Array{Any, 1})::Array{Any, 1}
   println("Quarter to Date")
   quarters = [90, 91, 92, 92]
   date = Date(arr[end]["query"]["start-date"])
@@ -163,7 +163,7 @@ end
 
 # Fix to correctly get yearLength for date by checking on which side of
 # the leap day it falls (if applicable)
-function yearToDate(arr::Array{Any, 1})
+function yearToDate(arr::Array{Any, 1})::Array{Any, 1}
   println("yearToDate")
   date = Date(arr[end]["query"]["start-date"])
   yearLength = checkLeapDay(date, date - Dates.Year(1)) ? 366 : 365
@@ -173,12 +173,12 @@ function yearToDate(arr::Array{Any, 1})
   return compareArbitrary(currentPeriod, lastPeriod)
 end
 
-function dayvsYesterday(arr::Array{Any, 1})
+function dayvsYesterday(arr::Array{Any, 1})::Array{Any, 1}
   println("dayvsYesterday")
   return arbitraryPeriod(arr, 1, 0)
 end
 
-function dayvsLastYear(arr::Array{Any, 1})
+function dayvsLastYear(arr::Array{Any, 1})::Array{Any, 1}
   println("dayvsLastYear")
   yearLength = checkLeapDay(date, date - Dates.Year(1)) ? 366 : 365
   return arbitraryPeriod(arr, 1, yearLength)
@@ -215,7 +215,7 @@ end
 #   return compareArbitrary(thisYear, lastYear)
 # end
 
-function generateInsights(dif::Dict{String, Any}, n::Int64)
+function generateInsights(dif::Dict{String, Any}, n::Int64)::Array{Any, 1}
   insights = []
   meta = dif["meta"]
   for met in keys(dif)
@@ -241,7 +241,7 @@ function generateInsights(dif::Dict{String, Any}, n::Int64)
   return insights[1:n]
 end
 
-function scoreSignificance(insight, met, dim, dif)
+function scoreSignificance(insight, met, dim, dif)::Float64
   mag = dif[met][dim]["magnitude"]
   insight["magnitude"] = mag
   insight["mag1"] = dif[met][dim]["mag1"]
@@ -253,7 +253,7 @@ function scoreSignificance(insight, met, dim, dif)
   return normMag + normPerc
 end
 
-function compare(first::Dict{String, Any}, second::Dict{String, Any})
+function compare(first::Dict{String, Any}, second::Dict{String, Any})::Dict{String, Any}
   inn = []
   out = []
   dif = Dict{String, Any}()
@@ -311,7 +311,7 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})
   return dif
 end
 
-function aggregate(arr::Array{Any, 1})
+function aggregate(arr::Array{Any, 1})::Dict{String, Any}
   agg = Dict{String, Any}()
   meta = Dict{String, Any}()
   agg["meta"] = meta
