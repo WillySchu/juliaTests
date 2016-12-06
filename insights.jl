@@ -118,41 +118,44 @@ function sortByDate!(arr::Array{Any, 1})
   sort!(arr, by=x->x["query"]["start-date"])
 end
 
-function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1})::Array{Any, 1}
+function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1}, t::String)::Array{Any, 1}
   current = aggregate(current)
   last = aggregate(last)
   dif = compare(current, last)
-  return generateInsights(dif, 5)
+  return generateInsights(dif, 5, t)
 end
 
-function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64)::Array{Any, 1}
+function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64, t::String)::Array{Any, 1}
   offset += len
   currentPeriod = arr[end-len+1:end]
   lastPeriod = arr[end-offset-len+1:end-offset]
-  return compareArbitrary(currentPeriod, lastPeriod)
+  return compareArbitrary(currentPeriod, lastPeriod, t)
 end
 
 function weekToDate(arr::Array{Any, 1})::Array{Any, 1}
-  println("Week to Date")
+  t = "weekToDate"
+  println(t)
   startDate = Date(arr[end]["query"]["start-date"])
   dayOfWeek = Dates.dayofweek(startDate)
   currentPeriod = arr[end-dayOfWeek+1:end]
   lastPeriod = arr[end-7-dayOfWeek+1:end-7]
-  return compareArbitrary(currentPeriod, lastPeriod)
+  return compareArbitrary(currentPeriod, lastPeriod, t)
 end
 
 function monthToDate(arr::Array{Any, 1})::Array{Any, 1}
-  println("Month to Date")
+  t = "monthToDate"
+  println("monthToDate")
   date = Date(arr[end]["query"]["start-date"])
   dayOfMonth = Dates.dayofmonth(date)
   daysInPrevMonth = Dates.daysinmonth(date - Dates.Month(1))
   currentPeriod = arr[end-dayOfMonth+1:end]
   lastPeriod = arr[end-dayOfMonth-daysInPrevMonth+1:end-daysInPrevMonth]
-  return compareArbitrary(currentPeriod, lastPeriod)
+  return compareArbitrary(currentPeriod, lastPeriod, t)
 end
 
 function qtrToDate(arr::Array{Any, 1})::Array{Any, 1}
-  println("Quarter to Date")
+  t = "qtrToDate"
+  println(t)
   quarters = [90, 91, 92, 92]
   date = Date(arr[end]["query"]["start-date"])
   if Dates.isleapyear(date)
@@ -163,30 +166,31 @@ function qtrToDate(arr::Array{Any, 1})::Array{Any, 1}
   dayOfQtr = Dates.dayofquarter(date)
   currentPeriod = arr[end-dayOfQtr+1:end]
   lastPeriod = arr[end-quarters[lastQtr]-dayOfQtr:end-quarters[lastQtr]]
-  return compareArbitrary(currentPeriod, lastPeriod)
+  return compareArbitrary(currentPeriod, lastPeriod, t)
 end
 
-# Fix to correctly get yearLength for date by checking on which side of
-# the leap day it falls (if applicable)
 function yearToDate(arr::Array{Any, 1})::Array{Any, 1}
-  println("yearToDate")
+  t = "yearToDate"
+  println(t)
   date = Date(arr[end]["query"]["start-date"])
   yearLength = checkLeapDay(date, date - Dates.Year(1)) ? 366 : 365
   dayOfYear = Dates.dayofyear(date)
   currentPeriod = arr[end-dayOfYear+1:end]
   lastPeriod = arr[end-yearLength-dayOfYear+1:end-yearLength]
-  return compareArbitrary(currentPeriod, lastPeriod)
+  return compareArbitrary(currentPeriod, lastPeriod, t)
 end
 
 function dayvsYesterday(arr::Array{Any, 1})::Array{Any, 1}
-  println("dayvsYesterday")
-  return arbitraryPeriod(arr, 1, 0)
+  t = "dayvsYesterday"
+  println(t)
+  return arbitraryPeriod(arr, 1, 0, t)
 end
 
 function dayvsLastYear(arr::Array{Any, 1})::Array{Any, 1}
-  println("dayvsLastYear")
+  t = "dayvsLastYear"
+  println(t)
   yearLength = checkLeapDay(date, date - Dates.Year(1)) ? 366 : 365
-  return arbitraryPeriod(arr, 1, yearLength)
+  return arbitraryPeriod(arr, 1, yearLength, t)
 end
 
 # Probably can remove the following commented functions
@@ -220,7 +224,7 @@ end
 #   return compareArbitrary(thisYear, lastYear)
 # end
 
-function generateInsights(dif::Dict{String, Any}, n::Int64)::Array{Any, 1}
+function generateInsights(dif::Dict{String, Any}, n::Int64, t::String)::Array{Any, 1}
   insights = []
   meta = dif["meta"]
   for met in keys(dif)
@@ -233,7 +237,7 @@ function generateInsights(dif::Dict{String, Any}, n::Int64)::Array{Any, 1}
       insight["endDate"] = meta["endDate"]
       insight["metric"] = met
       insight["dimensions"] = dim
-      insight["type"] = "type"
+      insight["type"] = t
       insight["percentChange"] = dif[met][dim]["score"]
       insight["significance"] = scoreSignificance(insight, met, dim, dif)
       # TODO: handle infinity better
