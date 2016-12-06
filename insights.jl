@@ -20,7 +20,7 @@ function harvestInsights(arr::Array{Any,1})::Dict{String, Any}
     days = splitByDate(arr[1])
     checkContiguousDates(days)
   elseif length(arr) == 2
-    return [compareArbitrary(arr[2], arr[1])]
+    return [compareArbitrary(arr[2], arr[1], "adHoc")]
   else
     days = arr
     checkContiguousDates(days)
