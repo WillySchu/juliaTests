@@ -307,9 +307,9 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})::Dict{Stri
         dif[met][dim]["mag1"] = first[met][dim]
         push!(out, dim)
       end
-      if largest[met]["perc"] < abs(dif[met][dim]["score"])
+      if abs(largest[met]["perc"]) < abs(dif[met][dim]["score"])
         largest[met]["perc"] = dif[met][dim]["score"] == Inf ?
-          largest[met]["perc"] : abs(dif[met][dim]["score"])
+          largest[met]["perc"] : dif[met][dim]["score"]
       end
     end
   end
