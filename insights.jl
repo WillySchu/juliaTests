@@ -10,7 +10,7 @@ macro swap(x,y)
    end
 end
 
-function harvestInsights(arr::Array{Any,1})
+function harvestInsights(arr::Array{Any,1})::Dict{String, Any}
   println("Harvesting...")
   results = Dict{String, Array}()
 
@@ -78,7 +78,7 @@ function splitByDate(data::Dict{String, Any})::Array{Any, 1}
   return result
 end
 
-function checkContiguousDates(arr::Array{Any, 1})::Nothing
+function checkContiguousDates(arr::Array{Any, 1})
   local lastDate = ""
   oneDay = Dates.Day(1)
   for day in arr
