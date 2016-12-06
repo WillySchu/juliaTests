@@ -78,7 +78,7 @@ function splitByDate(data::Dict{String, Any})::Array{Any, 1}
   return result
 end
 
-function checkContiguousDates(arr::Array{Any, 1})
+function checkContiguousDates(arr::Array{Any, 1})::Nothing
   local lastDate = ""
   oneDay = Dates.Day(1)
   for day in arr
