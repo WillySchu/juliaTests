@@ -282,8 +282,8 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})::Dict{Stri
     for dim in keys(first[met])
       dif[met][dim] = Dict{String, Float64}()
       if haskey(second[met], dim)
-        if largest[met]["mag"] < second[met][dim] + first[met][dim]
-          largest[met]["mag"] = second[met][dim] + first[met][dim]
+        if largest[met]["mag"] < abs(second[met][dim]) + abs(first[met][dim])
+          largest[met]["mag"] = abs(second[met][dim]) + abs(first[met][dim])
         end
         push!(inn, dim)
         if first[met][dim] == 0
@@ -307,9 +307,9 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})::Dict{Stri
         dif[met][dim]["mag1"] = first[met][dim]
         push!(out, dim)
       end
-      if largest[met]["perc"] < dif[met][dim]["score"]
+      if largest[met]["perc"] < abs(dif[met][dim]["score"])
         largest[met]["perc"] = dif[met][dim]["score"] == Inf ?
-          largest[met]["perc"] : dif[met][dim]["score"]
+          largest[met]["perc"] : abs(dif[met][dim]["score"])
       end
     end
   end
