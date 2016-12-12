@@ -2,7 +2,11 @@ module Insights
 
 dateRegex = r".+?(?=T)"
 
-macro swap(x,y)
+# A helper macro for swapping two values in place
+# @param Any, first value to be swapped
+# @param Any, second value to be swapped
+# @returns Nothing
+macro swap!(x,y)
   quote
     local tmp = $(esc(x))
     $(esc(x)) = $(esc(y))
@@ -12,6 +16,11 @@ end
 
 # Types: [dayvsYesterday, weekToDate, monthToDate, qtrToDate, yearToDate dayvsLastYear]
 
+# Main function for insight generation
+# generates as many possible insights if data is contiguous
+# else if two sets of data, compares those two
+# @param Array of time seriesed ga style data
+# @returns Dict of generated insights
 function harvestInsights(arr::Array{Any,1})::Dict{String, Any}
   println("Harvesting...")
   results = Dict{String, Array}()
@@ -53,6 +62,9 @@ function harvestInsights(arr::Array{Any,1})::Dict{String, Any}
   return results
 end
 
+# Takes a group of time seriesed data and splits it out into groups for individual days
+# @param Dict of unsorted time seriesed data
+# @returns Array of data, sorted by date
 function splitByDate(data::Dict{String, Any})::Array{Any, 1}
   result = []
   splits = Dict{String, Any}()
@@ -84,6 +96,10 @@ function splitByDate(data::Dict{String, Any})::Array{Any, 1}
   return result
 end
 
+# Checks data to see if it contains all contiguous dates
+# if data is not contiguous, throws an error
+# @param Array of date sorted data
+# @returns Nothing
 function checkContiguousDates(arr::Array{Any, 1})
   local lastDate = ""
   oneDay = Dates.Day(1)
@@ -100,9 +116,13 @@ function checkContiguousDates(arr::Array{Any, 1})
   end
 end
 
-function checkLeapDay(date1, date2)::Bool
+# Checks to see if a leap day exists between the two provided dates
+# @param Date first date
+# @param Date second date
+# @returns Bool whether or not there is a leap day between the dates
+function checkLeapDay(date1::Date, date2::Date)::Bool
   if date2 > date1
-    @swap(date1, date2)
+    @swap!(date1, date2)
   end
   d1 = Dates.isleapyear(date1)
   d2 = Dates.isleapyear(date2)
@@ -115,10 +135,17 @@ function checkLeapDay(date1, date2)::Bool
   end
 end
 
+# Sorts an array of ga style data by start-date in place
+# @param Array of ga style data seperated by date
+# @returns Nothing
 function sortByDate!(arr::Array{Any, 1})
   sort!(arr, by=x->x["query"]["start-date"])
 end
 
+# Takes two arrays, aggregates them by date, compares them, and returns insights
+# @param Array first array
+# @param Array second array
+# @returns Array of insight dicts
 function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1}, t::String)::Array{Any, 1}
   current = aggregate(current)
   last = aggregate(last)
@@ -126,6 +153,12 @@ function compareArbitrary(current::Array{Any, 1}, last::Array{Any, 1}, t::String
   return generateInsights(dif, 5, t)
 end
 
+# Splits an array of data up given the arbitrary params and compares the results
+# @param Array of ga style time seriesed data
+# @param Int64 length of arbitrary period
+# @param Int64 length of period between start of first and second period
+# @param String the type name of the insights to be generated
+# @returns Array of insight dicts
 function arbitraryPeriod(arr::Array{Any, 1}, len::Int64, offset::Int64, t::String)::Array{Any, 1}
   offset += len
   currentPeriod = arr[end-len+1:end]
@@ -225,6 +258,11 @@ end
 #   return compareArbitrary(thisYear, lastYear)
 # end
 
+# Generates insight dicts from compared and scored ga data
+# @param Dict compared and scored data
+# @param Int64 number of insights to generate
+# @param String type of insights to be generated
+# @returns Array of insight dicts
 function generateInsights(dif::Dict{String, Any}, n::Int64, t::String)::Array{Any, 1}
   insights = []
   meta = dif["meta"]
