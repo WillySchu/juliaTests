@@ -289,7 +289,13 @@ function generateInsights(dif::Dict{String, Any}, n::Int64, t::String)::Array{An
   return insights[1:n]
 end
 
-function scoreSignificance(insight, met, dim, dif)::Float64
+# Generates a significance score for a provided insight
+# @param Dict insight to generate score for
+# @param String metric of the insight
+# @param String dimensions of insight
+# @param Dict comparison data that contains necessary metadata
+# @returns Float64 significance score of insight
+function scoreSignificance(insight::Dict{String, Any}, met::String, dim::String, dif::Dict{String, Any})::Float64
   mag = dif[met][dim]["magnitude"]
   insight["magnitude"] = mag
   insight["mag1"] = dif[met][dim]["mag1"]
@@ -301,6 +307,10 @@ function scoreSignificance(insight, met, dim, dif)::Float64
   return normMag + normPerc
 end
 
+# Compares two aggregated sets of ga style data to find % changes for each row
+# @param Dict first set of data, most recent
+# @param Dict second set of data, historical
+# @returns Dict a dictionary containing the % change for each row as well as metadata about the sets as a whole
 function compare(first::Dict{String, Any}, second::Dict{String, Any})::Dict{String, Any}
   inn = []
   out = []
@@ -359,6 +369,9 @@ function compare(first::Dict{String, Any}, second::Dict{String, Any})::Dict{Stri
   return dif
 end
 
+# Aggregates and array of ga style time seriesed dictionaries into one, date agnostic, dictionary
+# @param Array of seperate ga style dicts
+# @returns Dict of aggregated data
 function aggregate(arr::Array{Any, 1})::Dict{String, Any}
   agg = Dict{String, Any}()
   meta = Dict{String, Any}()
