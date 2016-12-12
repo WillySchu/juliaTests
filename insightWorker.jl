@@ -3,21 +3,24 @@ include("insights.jl")
 using .Insights
 using Redis
 using JSON
+using Logging
+
+Logging.configure(filename="logfile.log")
+Logging.configure(level=DEBUG)
 
 conn = RedisConnection()
 pubsub = RedisConnection()
 
 function start(o)
-  println("starting")
+  debug("starting")
   envelope = JSON.parse(o[2])
-  println(length(envelope))
 
   try
     insights = Insights.harvestInsights(envelope["payload"])
     envelope["payload"] = insights
     produce(envelope)
   catch e
-    println(e)
+    err(e)
     envelope["payload"] = []
     envelope["error"] = e
     produce(envelope)
@@ -27,10 +30,9 @@ end
 
 function sink(p::Task)
   for s in p
-    println("Finished")
-    println(s["returnKey"])
     publish(pubsub, s["returnKey"], JSON.json(s))
-    println("published")
+    debug("published")
+    debug(s["returnKey"])
   end
 end
 
